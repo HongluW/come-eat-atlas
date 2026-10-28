@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Come Eat, Compared</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: same porcelain system as the map; clickable stat row, one animated dot chart, highlight chips, detail strip. */
+:root {
+  --bg: #eef1ec; --surface: #f8f9f5; --ink: #1d2729; --muted: #5a6866; --line: #cdd4cc;
+  --c-feed: #d4622a; --c-care: #2a8a70; --c-rel: #7655ad; --c-exp: #2f6fae; --c-stat: #b0861f;
+  --e3: #1f5f5a; --e2: #4f9a91; --e1: #a9d1c9;
+  --on-dark: #f8f9f5; --on-light: #1d2729;
+  --spring: cubic-bezier(.34, 1.56, .64, 1); --ease: cubic-bezier(.2, .8, .2, 1);
+  --display: "Young Serif", "Iowan Old Style", Georgia, serif;
+  --body: "Figtree", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --script: "Hiragino Sans", "PingFang SC", "Apple SD Gothic Neo", "Noto Sans CJK SC", "Noto Sans", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #131a1b; --surface: #1a2224; --ink: #e6ebe6; --muted: #9aa8a5; --line: #2f3a3c;
+    --c-feed: #ee8350; --c-care: #45b796; --c-rel: #a589d8; --c-exp: #5e9ddb; --c-stat: #d6aa3e;
+    --e3: #6fc2b6; --e2: #3f8c83; --e1: #285a55; --on-dark: #131a1b; --on-light: #e6ebe6;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #131a1b; --surface: #1a2224; --ink: #e6ebe6; --muted: #9aa8a5; --line: #2f3a3c;
+  --c-feed: #ee8350; --c-care: #45b796; --c-rel: #a589d8; --c-exp: #5e9ddb; --c-stat: #d6aa3e;
+  --e3: #6fc2b6; --e2: #3f8c83; --e1: #285a55; --on-dark: #131a1b; --on-light: #e6ebe6;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5; }
+[hidden] { display: none !important; }
+button { font-family: var(--body); color: inherit; }
+:focus { outline: none; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+a { color: inherit; text-underline-offset: 2px; text-decoration-color: var(--muted); }
+
+.wrap { max-width: 980px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 40px; display: grid; gap: 22px; }
+header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 8px 20px; }
+h1 { font-family: var(--display); font-weight: 400; font-size: clamp(32px, 5vw, 50px); line-height: 1; margin: 0; }
+h1 span { color: var(--c-feed); }
+.back { font-weight: 600; font-size: 13px; text-decoration: none; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 12px; display: inline-flex; gap: 6px; align-items: center; transition: transform .25s var(--spring), border-color .2s; }
+.back:hover { transform: translateX(-2px); border-color: var(--ink); }
+
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.stat { text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; cursor: pointer; display: grid; gap: 2px; transition: transform .3s var(--spring), border-color .2s, box-shadow .2s; }
+.stat:hover { transform: translateY(-3px); }
+.stat[aria-pressed="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.stat b { font-family: var(--display); font-weight: 400; font-size: 40px; line-height: 1; font-variant-numeric: tabular-nums; }
+.stat b small { font-size: .45em; color: var(--muted); }
+.stat span { font-size: 13.5px; color: var(--muted); }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 16px 16px 14px; display: grid; gap: 14px; min-width: 0; }
+.bar { display: flex; flex-wrap: wrap; gap: 8px 14px; justify-content: space-between; align-items: center; }
+.seg { position: relative; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1px solid var(--line); border-radius: 999px; padding: 3px; background: var(--bg); }
+.seg .thumb { position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc(50% - 3px); border-radius: 999px; background: var(--ink); transition: transform .45s var(--spring); }
+.seg[data-on="1"] .thumb { transform: translateX(100%); }
+.seg button { position: relative; z-index: 1; font-weight: 600; font-size: 12.5px; color: var(--muted); background: none; border: 0; border-radius: 999px; padding: 5px 12px; cursor: pointer; transition: color .3s; white-space: nowrap; }
+.seg button[aria-pressed="true"] { color: var(--bg); }
+.seglabel { font-size: 12px; color: var(--muted); margin-right: 6px; }
+.ctl { display: flex; align-items: center; }
+
+.caption { font-family: var(--display); font-size: 19px; line-height: 1.3; margin: 0; min-height: 2.6em; text-wrap: balance; }
+.caption.swap { animation: swap .45s var(--ease); }
+@keyframes swap { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+.chart { position: relative; width: 100%; }
+.dot { position: absolute; left: 0; top: 0; width: var(--d); height: var(--d); border-radius: 50%; border: 0; cursor: pointer; font-weight: 700; font-size: calc(var(--d) * .3); letter-spacing: .02em; display: grid; place-items: center; color: var(--on-dark);
+  transition: transform .7s var(--ease), background-color .5s var(--ease), color .5s, opacity .35s, box-shadow .2s; transition-delay: var(--delay, 0ms); }
+.dot:hover { box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--ink); z-index: 2; }
+.dot.sel { box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--ink); z-index: 2; }
+.dot.dim { opacity: .16; }
+.dot.light { color: var(--on-light); }
+.dot.pop { animation: pop .5s var(--spring); }
+@keyframes pop { 50% { scale: 1.25; } }
+.col { position: absolute; top: 0; text-align: center; font-size: 12px; color: var(--muted); line-height: 1.25; transition: left .7s var(--ease); }
+.col b { display: block; font-family: var(--display); font-weight: 400; font-size: 20px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.axis { position: absolute; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 11.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); transition: opacity .4s; }
+.axis i { flex: 1; height: 1px; background: linear-gradient(90deg, var(--c-exp), var(--c-feed), var(--c-stat)); opacity: .7; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.chips .lab { font-size: 12px; color: var(--muted); margin-right: 2px; }
+.chip { font-weight: 500; font-size: 13px; background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; transition: transform .25s var(--spring), border-color .2s, background .2s; }
+.chip:hover { transform: translateY(-2px); }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.chip svg { width: 16px; height: 16px; flex: none; }
+.found { font-size: 13.5px; color: var(--muted); min-height: 1.5em; margin: 0; }
+.found.swap { animation: swap .35s var(--ease); }
+
+.detail { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; }
+.detail.swap { animation: swap .4s var(--ease); }
+.detail .big { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; color: var(--on-dark); }
+.detail h3 { font-family: var(--display); font-weight: 400; font-size: 20px; margin: 0; line-height: 1.15; }
+.detail .ph { font-family: var(--script); font-weight: 600; font-size: 17px; overflow-wrap: anywhere; }
+.detail .ph.latin { font-family: var(--display); font-weight: 400; }
+.detail .meta { display: flex; flex-wrap: wrap; gap: 6px 10px; font-size: 12.5px; color: var(--muted); align-items: center; }
+.lvl { display: inline-flex; gap: 2px; vertical-align: -1px; }
+.lvl i { width: 5px; height: 12px; border-radius: 1px; background: var(--line); }
+.lvl[data-l="3"] i, .lvl[data-l="2"] i:nth-child(-n+2), .lvl[data-l="1"] i:first-child { background: var(--e3); }
+.go { font-weight: 600; font-size: 13px; text-decoration: none; white-space: nowrap; border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; transition: border-color .2s, transform .25s var(--spring); }
+.go:hover { border-color: var(--ink); transform: translateX(2px); }
+
+footer { font-size: 12.5px; color: var(--muted); }
+
+@media (max-width: 640px) {
+  .stats { grid-template-columns: minmax(0, 1fr); }
+  .stat { grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 12px; }
+  .stat b { font-size: 32px; min-width: 72px; }
+  .detail { grid-template-columns: auto minmax(0, 1fr); }
+  .detail .go { grid-column: 1 / -1; justify-self: start; }
+  .caption { font-size: 17px; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Come eat, <span>compared</span></h1>
+    <a class="back" href="./">
+      <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Back to the map
+    </a>
+  </header>
+
+  <section class="stats" aria-label="Key findings">
+    <button type="button" class="stat" data-preset="nowords"><b id="n1">17<small>/21</small></b><span>places make up without saying sorry</span></button>
+    <button type="button" class="stat" data-preset="research"><b>3<small>/21</small></b><span>are backed by research: China, Japan and the US</span></button>
+    <button type="button" class="stat" data-preset="shift"><b>11<small>/21</small></b><span>have local writers urging parents to say the words</span></button>
+  </section>
+
+  <section class="panel">
+    <div class="bar">
+      <div class="ctl"><span class="seglabel">Group</span>
+        <div class="seg" id="seg-group" data-on="0">
+          <span class="thumb" aria-hidden="true"></span>
+          <button type="button" data-v="gesture" aria-pressed="true">By gesture</button>
+          <button type="button" data-v="region" aria-pressed="false">By region</button>
+        </div>
+      </div>
+      <div class="ctl"><span class="seglabel">Color</span>
+        <div class="seg" id="seg-color" data-on="0">
+          <span class="thumb" aria-hidden="true"></span>
+          <button type="button" data-v="gesture" aria-pressed="true">Gesture</button>
+          <button type="button" data-v="evidence" aria-pressed="false">Evidence</button>
+        </div>
+      </div>
+    </div>
+    <p class="caption" id="caption"></p>
+    <div class="chart" id="chart"></div>
+    <div class="chips" id="chips"><span class="lab">Highlight</span></div>
+    <p class="found" id="found"></p>
+  </section>
+
+  <section class="detail" id="detail" aria-live="polite"></section>
+
+  <footer>Groupings are our reading of the sources. Every place links back to its sources on the map.</footer>
+</div>
+
+<script>
+const CATS = { exp: "Says sorry", rel: "Soft apology", care: "Check-in", feed: "Feeding", stat: "Authority kept" };
+const EV = { 3: "Studied", 2: "Reported", 1: "Thin" };
+
+const DATA = [
+  { key: "china", name: "China", ids: ["156"], cat: "feed", ev: 3,
+    native: "来吃饭", rom: "lái chī fàn", lit: "\"Come eat.\"",
+    looks: ["Calls you to the table as if the fight never happened", "Peels and slices fruit and leaves it beside you", "Cooks a dish you like"],
+    why: "Research on Chinese and Chinese immigrant parents finds warmth shown through instrumental support, sacrifice and indirect, nonverbal communication more than spoken affection. Hierarchy and face make a spoken apology to a child feel like losing standing.",
+    note: "The mechanism is studied (Wu & Chao; Cheah et al. 2015). The food-as-apology detail itself comes from first-person accounts, not surveys.",
+    src: [
+      ["Cheah et al. 2015, Developmental Psychology: Chinese immigrant vs European American mothers' warmth", "https://annenberg.brown.edu/publications/understanding-chinese-immigrant-and-european-american-mothers-expressions-warmth"],
+      ["Wu & Chao: Chinese norms of parental warmth", "https://pmc.ncbi.nlm.nih.gov/articles/PMC5793938"],
+      ["El Estoque: \"Fruitless communication\"", "https://elestoque.org/2024/05/23/opinion/fruitless-communication/"],
+      ["Psychology Today: When sliced fruit isn't an apology", "https://www.psychologytoday.com/us/blog/minority-report/202604/when-sliced-fruit-isnt-an-apology"],
+      ["SBS Insight: My parents could never say sorry", "https://www.sbs.com.au/news/insight/article/my-parents-could-never-say-sorry-it-had-a-huge-impact-on-our-relationship/efaw06gp7"]
+    ] },
+  { key: "vietnam", name: "Vietnam", ids: ["704"], cat: "feed", ev: 2,
+    native: "Ăn chưa?", latin: true, rom: "an chua", lit: "\"Eaten yet?\"",
+    looks: ["Peels and carves fruit into neat shapes (gọt hoa quả)", "Keeps buying your favorite food", "Cooks something fresh instead of reheating leftovers, a sign the anger is over"],
+    why: "Vietnamese parental love is described as service-oriented: shown through what parents do for you, in a culture shaped by Confucian values.",
+    note: "Several independent accounts. No study measures it as an apology specifically.",
+    src: [
+      ["Vietcetera: How Vietnamese parents express their love", "https://vietcetera.com/en/how-vietnamese-parents-express-their-love-a-service-oriented-culture"],
+      ["Vietcetera: How Vietnamese say I love you without saying it", "https://vietcetera.com/amp/en/how-vietnamese-say-i-love-you-without-saying-it"],
+      ["El Estoque: \"Fruitless communication\"", "https://elestoque.org/2024/05/23/opinion/fruitless-communication/"]
+    ] },
+  { key: "singapore", name: "Singapore", ids: [], point: [103.82, 1.35], cat: "care", ev: 2,
+    native: "Tomorrow coming home for dinner?", latin: true, rom: "also: \"Want Yakult?\"", lit: "An invitation that means the fight is over.",
+    looks: ["Leaves leftovers in the fridge for when you get hungry", "Reminds you to take an umbrella", "Drives you to the bus stop", "Buys min jiang kueh after hours of silence", "Starts small talk or gossip as if nothing happened"],
+    why: "Readers cite pride, the belief that being older means not being wrong, and parenting seen as a duty rather than a relationship.",
+    note: "Drawn from one article that collected many readers' experiences.",
+    src: [
+      ["RICE Media: The one phrase Singaporean parents never seem to say", "https://www.ricemedia.co/?p=24083"]
+    ] },
+  { key: "korea", name: "South Korea", ids: ["410"], cat: "feed", ev: 2,
+    native: "사과", rom: "sagwa", lit: "Means both \"apple\" and \"apology.\"",
+    looks: ["After a fight, a plate of carefully sliced apples appears", "\"Did you eat?\" (밥 먹었어?) as the first words after the silence", "A spoken sorry is felt to cost the parent face"],
+    why: "Korean-American writers describe parents who apologize with food and never in words. 사과 happens to mean both apple and apology, so the sliced apple is a pun the whole family understands.",
+    note: "Two independent first-person accounts plus the broader Asian-household pattern. No Korea-based study.",
+    src: [
+      ["Syracuse Expressions: Sagwa, an essay on apples as apology", "https://tellyourstory.expressions.syr.edu/2024/sagwa/"],
+      ["Psychology Today (Korean-American therapist): When sliced fruit isn't an apology", "https://www.psychologytoday.com/us/blog/minority-report/202604/when-sliced-fruit-isnt-an-apology"],
+      ["Talk To Me In Korean: Why do Koreans always ask \"Did you eat?\"", "https://blog.talktomeinkorean.com/why-do-koreans-always-ask-did-you-eat/"]
+    ] },
+  { key: "philippines", name: "Philippines", ids: ["608"], cat: "care", ev: 1,
+    native: "Pasensya na", latin: true, rom: "pa-SEN-sha na", lit: "\"Bear with it.\" Asks you to let go, without admitting fault.",
+    looks: ["Says pasensya na instead of the formal paumanhin", "Treats you to food or merienda, which in Filipino custom signals reconciliation", "Indirect phrasing that protects face (hiya)"],
+    why: "Filipino communication is often indirect to avoid loss of face, and sharing food is a standard way to make up.",
+    note: "The phrases and the food custom are documented for Filipinos in general. The parent-specific source is a podcast episode on Filipino parents who never say sorry.",
+    src: [
+      ["Language Log: No word for 'sorry' in Tagalog", "https://languagelog.ldc.upenn.edu/nll/?p=8626"],
+      ["Kaiwa: How Filipinos actually apologize", "https://trykaiwa.com/blog/filipino-apologizing-realistic"],
+      ["Motheroo podcast: When Filipino parents never say sorry", "https://music.amazon.co.uk/podcasts/ddc34de4-bed1-4b63-984e-52dff8aadeaf/episodes/e4e0b75c-1af2-425c-bae9-fee5c647a61f/motheroo-podcast-the-accountability-gap-when-filipino-parents-never-say-sorry"]
+    ] },
+  { key: "japan", name: "Japan", ids: ["392"], cat: "rel", ev: 3,
+    native: "ごめんね", rom: "gomen ne", lit: "\"Sorry, okay?\"",
+    looks: ["Caregivers say gomen ne to children and model it even toward toys and animals", "The ne softens it into a bid for closeness"],
+    why: "A Japanese apology often acknowledges the burden the other person carried rather than admitting personal fault. Apology here is something adults say often, and teach early as a way to tend relationships.",
+    note: "Studied: caregiver apology socialization (Burdelski 2013) and Japan–US apology functions (Maddux et al. 2011).",
+    src: [
+      ["Burdelski 2013, Pragmatics and Society: Socializing apology in Japan", "https://www.jbe-platform.com/content/journals/10.1075/ps.4.1.03bur"],
+      ["Maddux et al. 2011: Cultural differences in the function and meaning of apologies", "https://willmaddux.web.unc.edu/wp-content/uploads/sites/15846/2018/04/IN-Culture-and-Apologies.pdf"],
+      ["Harvard PON: Before apologizing, consider the culture", "https://www.pon.harvard.edu/daily/international-negotiation-daily/international-negotiation-skills-before-apologizing-consider-the-culture"]
+    ] },
+  { key: "nigeria", name: "Nigeria", ids: ["566"], cat: "feed", ev: 2,
+    native: "Oya come and eat", latin: true, rom: "\"…I cooked your favorite food.\"", lit: "Dinner as the peace offering.",
+    looks: ["Cooks your favorite meal or brings jollof, chocolate, ice cream", "Buys new shoes or cloth", "Asks \"Are you still angry?\" then \"You don't have to be angry\"", "A playful \"Sorry na\" that isn't meant as a real apology"],
+    why: "Respect for elders runs deep, and admitting fault to a child can read as undermining parental authority.",
+    note: "Several Nigerian outlets and a viral post on X describe the same pattern. The poster called his mum's meal-and-letter apology rare for an African mother. No survey data.",
+    src: [
+      ["BellaNaija: Why Nigerian parents need to learn how to apologize", "https://www.bellanaija.com/2020/08/why-nigerian-parents-need-to-learn-how-to-apologize-hint-it-wont-kill-you/"],
+      ["Zikoko: 12 frustrating things Nigerian parents do", "https://www.zikoko.com/list/12-frustrating-things-nigerian-parents-do-to-their-kids/"],
+      ["Afrocritik: Drawing the line between respect and power", "https://afrocritik.com/drawing-the-line-between-respect-and-power-thirst/"],
+      ["Legit.ng: Mum sends son a meal and a letter as a peace offering (shared on X)", "https://www.legit.ng/1400023-nigerian-mum-sends-son-delicious-meal-touching-letter-peace-offering-offending-him.html"]
+    ] },
+  { key: "caribbean", name: "Caribbean", ids: ["388", "780", "328"], cat: "feed", ev: 1,
+    native: "Food or shoes", latin: true, rom: "also: tea, cut fruit", lit: "What an apology looked like growing up.",
+    looks: ["A favorite food or a cup of tea after being too sharp", "A gift, like new shoes", "Just as often: silence until it blows over"],
+    why: "Commentators describe an \"obedience over everything\" style of parenting in which the parent is rarely the one to apologize.",
+    note: "Based on replies to a SocaMom poll on X and a Guyanese column. Shown for Jamaica, Trinidad and Tobago, and Guyana.",
+    src: [
+      ["SocaMom: How Caribbean parents apologize (poll on X)", "https://socamom.com/w/?p=6291"],
+      ["Guyana Chronicle: Guyanese parents ought to be more apologetic", "https://guyanachronicle.com/2022/03/27/guyanese-parents-ought-to-be-more-apologetic-to-their-children/"]
+    ] },
+  { key: "mexico", name: "Mexico & Latino families", ids: ["484"], cat: "feed", ev: 1,
+    native: "¿Ya comiste?", latin: true, rom: "ya co-MEES-teh", lit: "\"Have you eaten?\"",
+    looks: ["Makes enchiladas or caldo instead of talking it through", "Insists on serving you more"],
+    why: "One writer puts it plainly: in many Latino families \"love is rarely announced. It is managed.\"",
+    note: "Sources describe food as unspoken care, not as an apology after a fight. Mexicans also say perdón a lot in everyday life, so this is about feelings, not the word.",
+    src: [
+      ["Hispanic Executive: \"Have you eaten?\" as a love language", "https://hispanicexecutive.com/hisplaining-have-you-eaten-love-language-latina-mom/"],
+      ["UC eScholarship: Latino mothers, feeding and cooking", "https://escholarship.org/uc/item/0k8520bm"],
+      ["Mexico News Daily: Why do Mexicans say sorry all the time?", "https://mexiconewsdaily.com/mexico-living/why-do-mexicans-say-sorry-all-the-time/"]
+    ] },
+  { key: "italy", name: "Italy & Italian-American families", ids: ["380"], cat: "feed", ev: 1,
+    native: "Mangia!", latin: true, rom: "MAHN-jah", lit: "\"Eat!\"",
+    looks: ["Cooking as the way to say what doesn't get said", "Feuds settled over the table"],
+    why: "Food-as-love is a strong theme in Italian-American family writing, including Louise DeSalvo's memoir of food, feuds and forgiveness.",
+    note: "Mostly memoir and essay from Italian-American families, not Italy itself.",
+    src: [
+      ["Publishers Weekly: DeSalvo, Crazy in the Kitchen", "https://www2.publishersweekly.com/9781582342986"],
+      ["Cultural Bites: The similarities of food cultures", "https://culturalbites.substack.com/p/the-similarities-of-food-cultures"]
+    ] },
+  { key: "india", name: "India", ids: ["356"], cat: "stat", ev: 1,
+    native: "(nothing said)", latin: true, rom: "", lit: "The fight is simply not mentioned again.",
+    looks: ["Parents rarely say sorry to children, even when at fault", "Normal routine resumes in place of an apology"],
+    why: "Indian parenting writers attribute it to ego and the fear that a child will \"take advantage\" of an apology.",
+    note: "Parenting blogs and essays only. Cut fruit is often called a South Asian love language, but no source tied it to apology.",
+    src: [
+      ["Women's Web: Parental ego and saying sorry", "https://www.womensweb.in/?p=307992"],
+      ["FirstCry Parenting: Habits that can cause issues for children", "https://parenting.firstcry.com/articles/these-9-habits-of-parents-can-cause-future-issues-for-children-lets-be-careful/"],
+      ["ParentCircle: Should a parent apologize to a child?", "https://www.parentcircle.com/should-a-parent-apologize-to-a-child/article"],
+      ["Catapult: How to stop saying sorry", "https://magazine.catapult.co/?p=2265"]
+    ] },
+  { key: "arab", name: "Arab world", ids: ["682","818","400","784","368","760","422","504","012","788","434","887","512","414","634","275"], cat: "stat", ev: 2,
+    native: "صلحة", rom: "sulha", lit: "Reconciliation, often sealed with a shared meal or bitter coffee.",
+    looks: ["In a role-play study, about 59% of Arabic speakers apologized explicitly to a child, against 100% of Americans", "They were more likely to explain what happened instead", "Repair tends to flow upward: the child shows respect, such as kissing a parent's head"],
+    why: "Research on Syrian Arabic finds the listener's age and status shape how often apology words get used, so a parent apologizing to a child is the least expected direction.",
+    note: "One role-play study, backed by research on status and apology in Arabic. Sulha is a community practice, not specific to parents and children.",
+    src: [
+      ["Arizona Working Papers in SLAT: Arabic vs English apology strategies", "https://journals.uair.arizona.edu/index.php/AZSLAT/article/download/21462/21032"],
+      ["Gulf News: UAE judge orders son to kiss father on the head", "https://gulfnews.com/uae/crime/uae-judge-orders-son-to-kiss-father-on-the-head-1.1570611880598"],
+      ["Palestine-Israel Journal: Sulha", "https://pij.org/articles/994"]
+    ] },
+  { key: "usa", name: "United States", ids: ["840"], cat: "exp", ev: 3,
+    native: "I'm sorry. I was wrong.", latin: true, rom: "", lit: "Name the mistake, own it, say what changes.",
+    looks: ["Says the words and names what they did", "Often adds an explanation", "Parenting advice treats it as modeling repair for the child"],
+    why: "In a role-play study every American participant apologized explicitly to a child. European American mothers report more direct, outward warmth. It's a norm rather than a universal: shame and withdrawal keep many US parents from apologizing.",
+    note: "Studied, though researchers note little is known about how often US parents actually apologize.",
+    src: [
+      ["Arizona Working Papers in SLAT: Arabic vs English apology strategies", "https://journals.uair.arizona.edu/index.php/AZSLAT/article/download/21462/21032"],
+      ["Characterizing maternal apology attitudes and behaviors (PMC)", "https://pmc.ncbi.nlm.nih.gov/articles/PMC5386507"],
+      ["Greater Good: What happens when parents say \"I was wrong\"", "https://greatergood.berkeley.edu/article/item/what_happens_when_parents_say_i_was_wrong"]
+    ] },
+  { key: "uk", name: "United Kingdom", ids: ["826"], cat: "exp", ev: 1,
+    native: "Sorry.", latin: true, rom: "", lit: "What today's parents say they owe their kids.",
+    looks: ["On Mumsnet, about 20 parents agreed that parents should apologize to children, with none against", "Many of them said their own parents never did", "Brits say sorry so often that 31% think they overdo it (YouGov)"],
+    why: "The habit looks generational: parents now in their 30s and 40s describe apologizing to their kids as normal, while their parents' generation wasn't raised to admit mistakes to a child.",
+    note: "Based on one parenting-forum thread plus general apology surveys. No study of UK parents apologizing.",
+    src: [
+      ["Mumsnet: AIBU to ask if a parent should apologise", "https://www.mumsnet.com/talk/am_i_being_unreasonable/3469230-To-ask-if-a-parent-should-apologise"],
+      ["YouGov: Do British people apologise too much?", "https://yougov.com/en-gb/articles/12709-oh-sorry-do-british-people-apologise-too-much"]
+    ] },
+  { key: "germany", name: "Germany", ids: ["276"], cat: "exp", ev: 1,
+    native: "Es tut mir leid", latin: true, rom: "es toot meer lite", lit: "\"I'm sorry.\" Roughly, \"it pains me.\"",
+    looks: ["In a 2026 Germany–Japan study, German children assumed a wronged person would stay upset if no apology came", "German parenting books urge parents to model honest apologies themselves"],
+    why: "Children grow up treating an apology as something owed. A parent who apologizes is modeling that rule.",
+    note: "The study measures children's attitudes to apology, not how often German parents apologize.",
+    src: [
+      ["Uni Münster: Attitudes to forgiveness in Germany and Japan", "https://www.uni-muenster.de/PsyIFP/AEKaertner/beobachtungslabor/forgiveness1.html"],
+      ["Uni Münster: How parents in Germany and China handle children's emotions", "https://www.uni-muenster.de/PsyIFP/AEKaertner/beobachtungslabor/wichtigebedeutungvongefuehlen.html"]
+    ] },
+  { key: "russia", name: "Russia", ids: ["643"], cat: "stat", ev: 1,
+    native: "Извини", rom: "izvini", lit: "\"Sorry.\" Something parents are only now being told to say.",
+    looks: ["Russian commentators describe parents who act like the family's CEO, or think providing for the child means never owing an apology", "Some will admit fault to another adult but not to the child", "Parenting media now urges parents to apologize, and some say more are learning to"],
+    why: "Researchers describe a paternalistic parenting style, and Russian speakers keep apologies for clear wrongs.",
+    note: "Russian-language parenting media and one academic paper. No survey of how often Russian parents apologize.",
+    src: [
+      ["Mel.fm: Why we should apologize to children more often", "https://mel.fm/blog/taisiya-nekrasova/87069-izvini-chto-vynuzhden-tebya-otvlech-kak-slova-proshcheniya-pomogayut-v-obshchenii-s-detmi"],
+      ["InoSMI: Why parents don't apologize", "https://inosmi.ru/20230625/roditeli-263787772.html"],
+      ["Atlantis Press: Russian parenting attitudes", "https://www.atlantis-press.com/article/125920287"],
+      ["Ogiermann 2009: Apologising in English, Polish and Russian", "https://benjamins.com/catalog/pbns.191"]
+    ] },
+  { key: "latam", name: "Spanish-speaking Latin America", ids: ["170","032","604","152","862","218","068","600","858","320","340","222","558","188","591"], cat: "stat", ev: 1,
+    native: "Perdón, hijo", latin: true, rom: "per-DOHN, EE-ho", lit: "\"Sorry, son.\" What psychologists in the region are urging parents to start saying.",
+    looks: ["Psychologists quoted in Colombian and Central American press say parents avoid apologizing for fear of losing authority and respect", "Asking forgiveness is described as outside the parent's role", "Some Latina mothers now say they apologize to their kids, unlike their own parents"],
+    why: "Authoritarian upbringing, one Colombian psychologist argues, leaves parents believing the adult can't be wrong in front of a child.",
+    note: "Advice columns and opinion pieces only. Food-as-care accounts (see Mexico) probably apply too, but none were found for South or Central America specifically. Brazil is grey because no source was found.",
+    src: [
+      ["El Tiempo (Colombia): Problems in raising children", "https://www.eltiempo.com/salud/problemas-en-la-crianza-de-ninos-46839"],
+      ["Prensa Libre (Guatemala): How to ask forgiveness", "https://www.prensalibre.com/vida/salud-y-familia/como-pedir-perdon/"],
+      ["El Heraldo (Honduras): Parents' apologies heal children", "https://www.elheraldo.hn/utilidad/saludybelleza/disculpas-padres-madres-sanan-heridas-hijos-explica-psicologa-IP28149537"],
+      ["HipLatina: Latina moms parenting differently", "https://hiplatina.com/?p=30982"]
+    ] },
+  { key: "ethiopia", name: "Ethiopia", ids: ["231"], cat: "stat", ev: 1,
+    native: "ቡና", rom: "buna", lit: "\"Coffee.\" Family problems get talked through over the ceremony.",
+    looks: ["Apologies tend to run from child to parent: one account describes kneeling to kiss a parent's knees", "When a family has a problem, they meet over a coffee ceremony"],
+    why: "Repair happens through respect toward the parent and a shared ritual, rather than a parent apologizing to a child.",
+    note: "A folklore archive account and community reports. Nothing found on parents apologizing to children.",
+    src: [
+      ["USC Folklore Archives: Ethiopian apologies", "https://folklore.usc.edu/?p=39920"],
+      ["The Examiner: The sweet taste of peace", "https://www.examiner.com.au/story/5563375/the-sweet-taste-of-peace/?cs=7674"]
+    ] },
+  { key: "ghana", name: "Ghana", ids: ["288"], cat: "stat", ev: 1,
+    native: "(nothing said)", latin: true, rom: "", lit: "\"Adults are always right.\"",
+    looks: ["A post on X telling parents to apologize to kids split replies", "One reply: they grew up believing adults are always right", "Another: their father did apologize and explained his decisions"],
+    why: "Commenters worry that apologizing treats children as equals and invites disobedience.",
+    note: "One viral thread on X, reported by YEN.com.gh. Treat as a snapshot of opinion.",
+    src: [
+      ["YEN.com.gh: Netizens react to post urging parents to apologize to children", "https://yen.com.gh/people/family-relationships/196022-netizens-reacting-after-admonishing-parents-apologize-their-children-they-wrong/"]
+    ] },
+  { key: "kenya", name: "Kenya", ids: ["404"], cat: "stat", ev: 1,
+    native: "Samahani", latin: true, rom: "Swahili · sa-ma-HA-ni", lit: "\"Sorry.\" A word columnists want fathers to use more.",
+    looks: ["A Nation columnist wishes more Kenyan fathers apologized to their children, as his own did", "Critics say harsh discipline has long been treated as normal"],
+    why: "Parental authority and strict discipline leave little room for a parent to admit fault to a child.",
+    note: "Opinion pieces only.",
+    src: [
+      ["Nation: Be the bigger man and own up to your mistakes", "https://nation.africa/kenya/life-and-style/living/be-the-bigger-man-and-own-up-to-your-mistakes-907540"],
+      ["K24: Hanifa Adan on corporal punishment", "https://k24.digital/entertainment/hanifa-adan-criticises-parents-over-normalisation-of-corporal-punishment/amp"]
+    ] },
+  { key: "southafrica", name: "South Africa", ids: ["710"], cat: "stat", ev: 1,
+    native: "Ndicela uxolo", latin: true, rom: "isiXhosa", lit: "\"I ask for peace.\"",
+    looks: ["Parenting writers recall mothers who never apologized, where the adult always had the final word", "Social workers now urge parents to say sorry: parents are imperfect and will hurt their kids", "Fathers describe love as provision, \"doing what they had to do\""],
+    why: "Ubuntu centers reconciliation, but within the family it has tended to run from the young to the old.",
+    note: "A South African parenting site and one Mail & Guardian essay. The ubuntu phrase is a community apology, not a parent's.",
+    src: [
+      ["BabyYumYum: Reasons parents should apologise to kids", "https://babyyumyum.com/?p=23815"],
+      ["Mail & Guardian: In a therapy session with my African father", "https://mg.co.za/thought-leader/2025-08-08-in-a-therapy-session-with-my-african-father/"],
+      ["Center for Action and Contemplation: I ask for peace", "https://cac.org/daily-meditations/i-ask-for-peace-2022-09-14/"]
+    ] }
+];
+
+const REGIONS = [
+  ["americas", "Americas", ["usa", "mexico", "caribbean", "latam"]],
+  ["europe", "Europe", ["uk", "germany", "russia", "italy"]],
+  ["africa", "Africa", ["nigeria", "ethiopia", "ghana", "kenya", "southafrica"]],
+  ["mesa", "Middle East & S. Asia", ["arab", "india"]],
+  ["asia", "East & SE Asia", ["china", "vietnam", "singapore", "korea", "philippines", "japan"]]
+];
+const GESTURES = ["exp", "rel", "care", "feed", "stat"];
+const CODE = { china: "CN", vietnam: "VN", singapore: "SG", korea: "KR", philippines: "PH", japan: "JP", nigeria: "NG", caribbean: "CRB", mexico: "MX", italy: "IT", india: "IN", arab: "ARB", usa: "US", uk: "UK", germany: "DE", russia: "RU", latam: "LAT", ethiopia: "ET", ghana: "GH", kenya: "KE", southafrica: "ZA" };
+
+const ico = {
+  fruit: '<svg viewBox="0 0 16 16"><path d="M2 9a6 6 0 0 0 12 0Z" fill="var(--c-feed)"/><path d="M4 9.6a4 4 0 0 0 8 0" fill="none" stroke="var(--surface)" stroke-width="1"/><path d="M8 9v4M5.3 10.6 8 9l2.7 1.6" stroke="var(--surface)" stroke-width=".8"/></svg>',
+  meal: '<svg viewBox="0 0 16 16"><path d="M2 8h12a6 6 0 0 1-12 0Z" fill="var(--c-feed)"/><path d="M5 6c0-1.5 1-1.5 1-3M8 6c0-1.5 1-1.5 1-3M11 6c0-1.5 1-1.5 1-3" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity=".6"/></svg>',
+  cup: '<svg viewBox="0 0 16 16"><path d="M3 6h8v4a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3Z" fill="var(--c-stat)"/><path d="M11 7h1.2a1.5 1.5 0 0 1 0 3H11" fill="none" stroke="var(--c-stat)" stroke-width="1.3"/><path d="M6 4.5c0-1 .8-1 .8-2M8.4 4.5c0-1 .8-1 .8-2" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity=".6"/></svg>',
+  gift: '<svg viewBox="0 0 16 16"><rect x="2.5" y="6" width="11" height="8" rx="1.5" fill="var(--c-care)"/><rect x="2" y="4.5" width="12" height="3" rx="1" fill="var(--c-care)"/><path d="M8 4.5V14" stroke="var(--surface)" stroke-width="1.4"/><path d="M8 4.5C6 1.5 4 3 5.5 4.5M8 4.5c2-3 4-1.5 2.5 0" fill="none" stroke="var(--c-care)" stroke-width="1.2"/></svg>',
+  ask: '<svg viewBox="0 0 16 16"><path d="M2.5 3.5h11a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H7l-3 2.5v-2.5H2.5a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1Z" fill="var(--c-rel)"/><circle cx="5.5" cy="7.5" r=".9" fill="var(--surface)"/><circle cx="8" cy="7.5" r=".9" fill="var(--surface)"/><circle cx="10.5" cy="7.5" r=".9" fill="var(--surface)"/></svg>'
+};
+const FILTERS = [
+  { id: "fruit", label: "Cut fruit", icon: "fruit", keys: ["china", "vietnam", "korea"], note: "Sliced, peeled, carved: fruit is the classic East Asian non-apology." },
+  { id: "meal", label: "A meal", icon: "meal", keys: ["china", "singapore", "nigeria", "mexico", "italy"], note: "A call to the table turns up in Asia, Africa, the Americas and Italian-American homes." },
+  { id: "cup", label: "Tea or coffee", icon: "cup", keys: ["caribbean", "ethiopia"], note: "A cup after being too sharp in the Caribbean; a coffee ceremony to talk it through in Ethiopia." },
+  { id: "gift", label: "Gifts & treats", icon: "gift", keys: ["nigeria", "caribbean", "singapore"], note: "New shoes, chocolate, ice cream, a bottle of Yakult." },
+  { id: "ask", label: "\"Have you eaten?\"", icon: "ask", keys: ["korea", "vietnam", "mexico"], note: "밥 먹었어? · Ăn chưa? · ¿Ya comiste? The same question shows care in three languages." }
+];
+const PRESETS = {
+  nowords: { group: "gesture", color: "gesture", keys: DATA.filter(d => !["exp", "rel"].includes(d.cat)).map(d => d.key), note: "Feeding, check-ins and silence: everything right of the soft apology." },
+  research: { group: "region", color: "evidence", keys: ["china", "japan", "usa"], note: "Everywhere else rests on first-hand accounts or a single study." },
+  shift: { group: "region", color: "gesture", keys: ["uk", "russia", "latam", "southafrica", "kenya", "ghana", "nigeria", "caribbean", "china", "singapore", "india"], note: "From Mumsnet to Lagos columns to Russian parenting media, the push is the same: say it out loud." }
+};
+const CAPTIONS = {
+  "gesture|gesture": "17 of 21 places make up without words. In 7 of them, food does the talking.",
+  "gesture|evidence": "The three studied places span the scale: words in the US, a soft apology in Japan, food in China.",
+  "region|gesture": "Feeding shows up on four continents. In Africa, 4 of 5 places keep the parent's authority instead.",
+  "region|evidence": "Research covers East Asia and the US. Africa, Europe and Latin America rest on first-hand accounts."
+};
+
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const byKey = Object.fromEntries(DATA.map(d => [d.key, d]));
+const regionOf = Object.fromEntries(REGIONS.flatMap(([id, , ks]) => ks.map(k => [k, id])));
+const state = { group: "gesture", color: "gesture", filter: null, sel: "china" };
+
+const chart = document.getElementById("chart");
+const dots = {};
+DATA.forEach((d, i) => {
+  const b = document.createElement("button");
+  b.type = "button"; b.className = "dot"; b.textContent = CODE[d.key] || d.key.slice(0, 2).toUpperCase();
+  b.setAttribute("aria-label", `${d.name}: ${CATS[d.cat]}, ${EV[d.ev]}`);
+  b.style.setProperty("--delay", `${i * 18}ms`);
+  b.onclick = () => select(d.key);
+  chart.appendChild(b); dots[d.key] = b;
+});
+const colEls = [];
+for (let i = 0; i < 5; i++) { const c = document.createElement("div"); c.className = "col"; chart.appendChild(c); colEls.push(c); }
+const axis = document.createElement("div");
+axis.className = "axis"; axis.innerHTML = "<span>Words</span><i></i><span>No words</span>";
+chart.appendChild(axis);
+
+function layout() {
+  const W = chart.clientWidth;
+  const D = Math.max(30, Math.min(46, Math.floor(W / 5 / 2.1)));
+  const gap = 6, colW = W / 5;
+  chart.style.setProperty("--d", D + "px");
+  const cols = state.group === "gesture"
+    ? GESTURES.map(g => [CATS[g], DATA.filter(d => d.cat === g)])
+    : REGIONS.map(([, label, ks]) => [label, ks.map(k => byKey[k])]);
+  const maxN = Math.max(...cols.map(c => c[1].length));
+  const base = maxN * (D + gap);
+  cols.forEach(([label, items], ci) => {
+    items.sort((a, b) => b.ev - a.ev || a.name.localeCompare(b.name));
+    items.forEach((d, i) => {
+      const x = ci * colW + colW / 2 - D / 2, y = base - (i + 1) * (D + gap) + gap;
+      dots[d.key].style.transform = `translate(${x}px, ${y}px)`;
+    });
+    const el = colEls[ci];
+    el.style.left = ci * colW + "px"; el.style.width = colW + "px"; el.style.top = base + 8 + "px";
+    el.innerHTML = `<b>${items.length}</b>${label}`;
+  });
+  const axisTop = base + 8 + 62;
+  axis.style.top = axisTop + "px";
+  axis.style.opacity = state.group === "gesture" ? 1 : 0;
+  chart.style.height = axisTop + (state.group === "gesture" ? 22 : 0) + "px";
+}
+
+function paint() {
+  DATA.forEach(d => {
+    const el = dots[d.key];
+    const c = state.color === "gesture" ? `var(--c-${d.cat})` : `var(--e${d.ev})`;
+    el.style.backgroundColor = c;
+    el.classList.toggle("light", state.color === "evidence" && d.ev === 1);
+  });
+}
+
+function setSeg(id, v) {
+  const seg = document.getElementById(id);
+  const btns = [...seg.querySelectorAll("button")];
+  btns.forEach((b, i) => { const on = b.dataset.v === v; b.setAttribute("aria-pressed", on); if (on) seg.dataset.on = i; });
+}
+
+const capEl = document.getElementById("caption");
+function caption() {
+  capEl.textContent = CAPTIONS[`${state.group}|${state.color}`];
+  if (!reduced) { capEl.classList.remove("swap"); void capEl.offsetWidth; capEl.classList.add("swap"); }
+}
+
+function update({ silent = false } = {}) {
+  setSeg("seg-group", state.group); setSeg("seg-color", state.color);
+  layout(); paint(); if (!silent) caption(); else capEl.textContent = CAPTIONS[`${state.group}|${state.color}`];
+}
+
+const foundEl = document.getElementById("found");
+const chipsEl = document.getElementById("chips");
+FILTERS.forEach(f => {
+  const b = document.createElement("button");
+  b.type = "button"; b.className = "chip"; b.dataset.f = f.id; b.setAttribute("aria-pressed", "false");
+  b.innerHTML = ico[f.icon] + f.label;
+  b.onclick = () => applyFilter(state.filter === f.id ? null : f.id);
+  chipsEl.appendChild(b);
+});
+document.querySelectorAll(".stat").forEach(s => s.onclick = () => {
+  const id = "preset:" + s.dataset.preset;
+  if (state.filter === id) { applyFilter(null); return; }
+  const p = PRESETS[s.dataset.preset];
+  state.group = p.group; state.color = p.color; update();
+  applyFilter(id);
+});
+
+function applyFilter(id) {
+  state.filter = id;
+  const def = !id ? null : id.startsWith("preset:") ? PRESETS[id.slice(7)] : FILTERS.find(f => f.id === id);
+  chipsEl.querySelectorAll(".chip").forEach(b => b.setAttribute("aria-pressed", b.dataset.f === id));
+  document.querySelectorAll(".stat").forEach(s => s.setAttribute("aria-pressed", id === "preset:" + s.dataset.preset));
+  DATA.forEach(d => {
+    const on = !def || def.keys.includes(d.key);
+    dots[d.key].classList.toggle("dim", !on);
+    if (def && on && !reduced) { dots[d.key].classList.remove("pop"); void dots[d.key].offsetWidth; dots[d.key].classList.add("pop"); }
+  });
+  foundEl.textContent = def ? `${def.keys.length} ${def.keys.length === 1 ? "place" : "places"}: ${def.keys.map(k => byKey[k].name).join(", ")}. ${def.note}` : "Tap a dot for its phrase, or highlight what parents offer.";
+  if (!reduced) { foundEl.classList.remove("swap"); void foundEl.offsetWidth; foundEl.classList.add("swap"); }
+}
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const detail = document.getElementById("detail");
+function select(key, animate = true) {
+  state.sel = key;
+  const d = byKey[key];
+  Object.entries(dots).forEach(([k, el]) => el.classList.toggle("sel", k === key));
+  detail.innerHTML = `
+    <div class="big" style="background:var(--c-${d.cat})">${CODE[key]}</div>
+    <div>
+      <h3>${esc(d.name)}</h3>
+      <div class="ph${d.latin ? " latin" : ""}">${esc(d.native)} <span style="font-family:var(--body);font-weight:400;font-size:13.5px;color:var(--muted)">${esc(d.lit)}</span></div>
+      <div class="meta"><span>${CATS[d.cat]}</span><span><span class="lvl" data-l="${d.ev}"><i></i><i></i><i></i></span> ${EV[d.ev]}</span><span>${REGIONS.find(r => r[0] === regionOf[key])[1]}</span></div>
+    </div>
+    <a class="go" href="./#${key}">See sources on the map →</a>`;
+  if (animate && !reduced) { detail.classList.remove("swap"); void detail.offsetWidth; detail.classList.add("swap"); }
+}
+
+document.querySelectorAll("#seg-group button").forEach(b => b.onclick = () => { state.group = b.dataset.v; update(); });
+document.querySelectorAll("#seg-color button").forEach(b => b.onclick = () => { state.color = b.dataset.v; update(); });
+new ResizeObserver(() => layout()).observe(chart);
+
+update({ silent: true });
+applyFilter(null);
+select("china", false);
+
+if (!reduced) {
+  const n = document.getElementById("n1"); let v = 0;
+  const tick = () => { v = Math.min(17, v + 1); n.innerHTML = `${v}<small>/21</small>`; if (v < 17) setTimeout(tick, 40); };
+  n.innerHTML = `0<small>/21</small>`; setTimeout(tick, 250);
+}
+</script>
+</body>
+</html>

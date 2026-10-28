@@ -109,6 +109,45 @@ h1 span { color: var(--c-feed); }
 
 footer { font-size: 12.5px; color: var(--muted); }
 
+h2 { font-family: var(--display); font-weight: 400; font-size: 26px; margin: 0; line-height: 1.1; }
+.dials { display: grid; grid-template-columns: minmax(0, 1fr) 250px; gap: 16px; align-items: start; }
+.steps { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.seg3 .thumb { width: calc(33.333% - 2px); }
+.seg3[data-on="1"] .thumb { transform: translateX(100%); }
+.seg3[data-on="2"] .thumb { transform: translateX(200%); }
+.play { font-weight: 600; font-size: 12.5px; border: 1px solid var(--line); background: var(--bg); border-radius: 999px; padding: 5px 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: transform .25s var(--spring), border-color .2s; }
+.play:hover { border-color: var(--ink); transform: translateY(-1px); }
+.play svg { width: 11px; height: 11px; }
+.plotwrap { display: grid; grid-template-columns: 22px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) 22px; gap: 4px; }
+.ylab, .xlab { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); display: flex; justify-content: space-between; align-items: center; transition: opacity .4s; }
+.ylab { writing-mode: vertical-rl; transform: rotate(180deg); }
+.xlab { grid-column: 2; }
+.plot { position: relative; aspect-ratio: 5 / 4; max-width: 100%; border: 1px solid var(--line); border-radius: 14px; background: var(--bg); overflow: hidden; }
+.quad { position: absolute; width: 50%; height: 50%; display: flex; padding: 10px 12px; font-family: var(--display); font-size: 15px; line-height: 1.2; transition: opacity .6s var(--ease); pointer-events: none; }
+.quad.tr { right: 0; top: 0; justify-content: flex-end; text-align: right; background: color-mix(in srgb, var(--c-feed) 10%, transparent); color: var(--c-feed); }
+.quad.bl { left: 0; bottom: 0; align-items: flex-end; background: color-mix(in srgb, var(--c-exp) 10%, transparent); color: var(--c-exp); }
+.mid { position: absolute; background: var(--line); transition: opacity .6s; }
+.mid.v { left: 50%; top: 0; bottom: 0; width: 1px; }
+.mid.h { top: 50%; left: 0; right: 0; height: 1px; }
+.wd { position: absolute; left: 0; top: 0; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 50%; background: var(--muted); opacity: .28; transition: transform .9s var(--ease), opacity .4s; transition-delay: var(--delay, 0ms); }
+.ad { position: absolute; left: 0; top: 0; width: var(--ad); height: var(--ad); margin: calc(var(--ad) / -2) 0 0 calc(var(--ad) / -2); border-radius: 50%; border: 0; cursor: pointer; display: grid; place-items: center; font-weight: 700; font-size: calc(var(--ad) * .3); color: var(--on-dark); box-shadow: 0 0 0 2px var(--bg); transition: transform .9s var(--ease), box-shadow .2s; transition-delay: var(--delay, 0ms); z-index: 1; }
+.ad:hover, .ad.sel { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--ink); z-index: 3; }
+.ptip { position: absolute; left: 0; top: 0; z-index: 4; pointer-events: none; background: var(--ink); color: var(--bg); font-size: 12px; line-height: 1.35; padding: 6px 9px; border-radius: 9px; max-width: 220px; opacity: 0; transition: opacity .15s; }
+.ptip.on { opacity: 1; }
+.dcap { margin: 0; font-family: var(--display); font-size: 17px; line-height: 1.3; min-height: 3.9em; text-wrap: balance; }
+.dcap.swap { animation: swap .45s var(--ease); }
+.side { display: grid; gap: 14px; }
+.ladder { border: 1px solid var(--line); border-radius: 14px; padding: 12px; display: grid; gap: 10px; background: var(--bg); }
+.ladder h3 { font-family: var(--display); font-weight: 400; font-size: 17px; margin: 0; }
+.lgrid { display: grid; grid-template-columns: auto 1fr 1fr; gap: 6px 8px; align-items: center; font-size: 11.5px; color: var(--muted); }
+.lgrid .hd { font-weight: 700; color: var(--ink); text-align: center; font-size: 12px; }
+.rung { height: 46px; display: grid; place-items: center; border-bottom: 1px dashed var(--line); }
+.sb { position: relative; background: var(--c-rel); color: var(--on-dark); font-weight: 700; font-size: 11px; border-radius: 12px 12px 12px 3px; padding: 4px 8px; transform: scale(0); transition: transform .7s var(--spring); transition-delay: var(--delay, 0ms); }
+.ladder.on .sb { transform: scale(var(--s)); }
+.lnote { font-size: 11.5px; color: var(--muted); margin: 0; }
+.dnote { font-size: 12px; color: var(--muted); margin: 0; }
+@media (max-width: 760px) { .dials { grid-template-columns: minmax(0, 1fr); } }
+
 @media (max-width: 640px) {
   .stats { grid-template-columns: minmax(0, 1fr); }
   .stat { grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 12px; }
@@ -160,6 +199,47 @@ footer { font-size: 12.5px; color: var(--muted); }
   </section>
 
   <section class="detail" id="detail" aria-live="polite"></section>
+
+  <section class="panel" aria-label="Two dials">
+    <div class="bar">
+      <h2>Two dials</h2>
+      <div class="steps">
+        <div class="seg seg3" id="seg-dial" data-on="2">
+          <span class="thumb" aria-hidden="true"></span>
+          <button type="button" data-v="0" aria-pressed="false">1 · Rank</button>
+          <button type="button" data-v="1" aria-pressed="false">2 · Say vs show</button>
+          <button type="button" data-v="2" aria-pressed="true">Both</button>
+        </div>
+        <button type="button" class="play" id="play"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 1.5v9l7-4.5Z" fill="currentColor"/></svg>Play</button>
+      </div>
+    </div>
+    <div class="dials">
+      <div class="plotwrap">
+        <div class="ylab" id="ylab"><span>Say it</span><span>Show it</span></div>
+        <div class="plot" id="plot">
+          <div class="quad tr">Sorry is a plate of fruit, or silence</div>
+          <div class="quad bl">Sorry is "I'm sorry"</div>
+          <div class="mid v"></div><div class="mid h"></div>
+          <div class="ptip" id="ptip"></div>
+        </div>
+        <div class="xlab" id="xlab"><span>Kids as equals</span><span>Kids obey</span></div>
+      </div>
+      <div class="side">
+        <p class="dcap" id="dcap"></p>
+        <div class="ladder" id="ladder">
+          <h3>Sorry goes up the ladder</h3>
+          <div class="lgrid">
+            <span></span><span class="hd">Jordan</span><span class="hd">Canada</span>
+            <span>Outranks you</span><div class="rung"><span class="sb" style="--s:1.35;--delay:0ms">sorry</span></div><div class="rung"><span class="sb" style="--s:1;--delay:120ms">sorry</span></div>
+            <span>Equal</span><div class="rung"><span class="sb" style="--s:.72;--delay:240ms">sorry</span></div><div class="rung"><span class="sb" style="--s:1;--delay:360ms">sorry</span></div>
+            <span>Below you</span><div class="rung"><span class="sb" style="--s:.72;--delay:480ms">sorry</span></div><div class="rung"><span class="sb" style="--s:1;--delay:600ms">sorry</span></div>
+          </div>
+          <p class="lnote">Shows the direction only. In <a href="https://dspace.library.uvic.ca/items/ade5041b-1529-471c-adc9-16173825cbf3" target="_blank" rel="noopener">Aleassa (2023)</a>, 20 Jordanian students used significantly more apology moves toward someone who outranked them. 20 Canadian students apologized about the same at every level, and more than the Jordanians toward equals and juniors.</p>
+        </div>
+      </div>
+    </div>
+    <p class="dnote">Rank is <a href="https://geerthofstede.com/research-and-vsm/dimension-data-matrix/" target="_blank" rel="noopener">Hofstede's power distance</a> score. Say vs show is Hofstede's individualism score, a common stand-in for how much gets said out loud. West Africa, East Africa and the Arab world use Hofstede's regional scores; the Caribbean and Latin America are averages. South Africa is left out because Hofstede only has a white-South-African sample. Grey dots are 75 other countries.</p>
+  </section>
 
   <footer>Groupings are our reading of the sources. Every place links back to its sources on the map.</footer>
 </div>
@@ -318,8 +398,8 @@ const DATA = [
       ["Uni Münster: How parents in Germany and China handle children's emotions", "https://www.uni-muenster.de/PsyIFP/AEKaertner/beobachtungslabor/wichtigebedeutungvongefuehlen.html"]
     ] },
   { key: "russia", name: "Russia", ids: ["643"], cat: "stat", ev: 1,
-    native: "Извини", rom: "izvini", lit: "\"Sorry.\" Something parents are only now being told to say.",
-    looks: ["Russian commentators describe parents who act like the family's CEO, or think providing for the child means never owing an apology", "Some will admit fault to another adult but not to the child", "Parenting media now urges parents to apologize, and some say more are learning to"],
+    native: "(nothing said)", latin: true, rom: "", lit: "Providing for the child is treated as enough.",
+    looks: ["Russian commentators describe parents who act like the family's CEO, or think providing for the child means never owing an apology", "Some will admit fault to another adult but not to the child", "Parenting media now urges parents to say \"Извини\" (izvini, sorry), and some say more are learning to"],
     why: "Researchers describe a paternalistic parenting style, and Russian speakers keep apologies for clear wrongs.",
     note: "Russian-language parenting media and one academic paper. No survey of how often Russian parents apologize.",
     src: [
@@ -329,8 +409,8 @@ const DATA = [
       ["Ogiermann 2009: Apologising in English, Polish and Russian", "https://benjamins.com/catalog/pbns.191"]
     ] },
   { key: "latam", name: "Spanish-speaking Latin America", ids: ["170","032","604","152","862","218","068","600","858","320","340","222","558","188","591"], cat: "stat", ev: 1,
-    native: "Perdón, hijo", latin: true, rom: "per-DOHN, EE-ho", lit: "\"Sorry, son.\" What psychologists in the region are urging parents to start saying.",
-    looks: ["Psychologists quoted in Colombian and Central American press say parents avoid apologizing for fear of losing authority and respect", "Asking forgiveness is described as outside the parent's role", "Some Latina mothers now say they apologize to their kids, unlike their own parents"],
+    native: "(nothing said)", latin: true, rom: "", lit: "Asking a child's forgiveness is seen as outside a parent's role.",
+    looks: ["Psychologists quoted in Colombian and Central American press say parents avoid apologizing for fear of losing authority and respect", "Psychologists in the region now urge parents to say \"Perdón, hijo\" (Sorry, son)", "In the US, some Latina mothers say they apologize to their kids, unlike their own parents"],
     why: "Authoritarian upbringing, one Colombian psychologist argues, leaves parents believing the adult can't be wrong in front of a child.",
     note: "Advice columns and opinion pieces only. Food-as-care accounts (see Mexico) probably apply too, but none were found for South or Central America specifically. Brazil is grey because no source was found.",
     src: [
@@ -357,8 +437,8 @@ const DATA = [
       ["YEN.com.gh: Netizens react to post urging parents to apologize to children", "https://yen.com.gh/people/family-relationships/196022-netizens-reacting-after-admonishing-parents-apologize-their-children-they-wrong/"]
     ] },
   { key: "kenya", name: "Kenya", ids: ["404"], cat: "stat", ev: 1,
-    native: "Samahani", latin: true, rom: "Swahili · sa-ma-HA-ni", lit: "\"Sorry.\" A word columnists want fathers to use more.",
-    looks: ["A Nation columnist wishes more Kenyan fathers apologized to their children, as his own did", "Critics say harsh discipline has long been treated as normal"],
+    native: "(nothing said)", latin: true, rom: "", lit: "Discipline comes first; the parent doesn't back down.",
+    looks: ["Critics say harsh discipline has long been treated as normal", "A Nation columnist wishes more Kenyan fathers would say \"samahani\" (sorry) to their children, as his own did"],
     why: "Parental authority and strict discipline leave little room for a parent to admit fault to a child.",
     note: "Opinion pieces only.",
     src: [
@@ -541,6 +621,93 @@ new ResizeObserver(() => layout()).observe(chart);
 update({ silent: true });
 applyFilter(null);
 select("china", false);
+
+// ---------- Two dials ----------
+const DIALS = {"places":{"china":{"pdi":80,"idv":20,"basis":"China"},"vietnam":{"pdi":70,"idv":20,"basis":"Vietnam"},"singapore":{"pdi":74,"idv":20,"basis":"Singapore"},"korea":{"pdi":60,"idv":18,"basis":"South Korea"},"philippines":{"pdi":94,"idv":32,"basis":"Philippines"},"japan":{"pdi":54,"idv":46,"basis":"Japan"},"nigeria":{"pdi":77,"idv":20,"basis":"Hofstede's West Africa score"},"ghana":{"pdi":77,"idv":20,"basis":"Hofstede's West Africa score"},"kenya":{"pdi":64,"idv":27,"basis":"Hofstede's East Africa score"},"ethiopia":{"pdi":64,"idv":27,"basis":"Hofstede's East Africa score"},"mexico":{"pdi":81,"idv":30,"basis":"Mexico"},"italy":{"pdi":50,"idv":76,"basis":"Italy"},"india":{"pdi":77,"idv":48,"basis":"India"},"arab":{"pdi":80,"idv":38,"basis":"Hofstede's Arab-countries score"},"usa":{"pdi":40,"idv":91,"basis":"U.S."},"uk":{"pdi":35,"idv":89,"basis":"Great Britain"},"germany":{"pdi":35,"idv":67,"basis":"Germany"},"russia":{"pdi":93,"idv":39,"basis":"Russia"},"caribbean":{"pdi":46,"idv":28,"basis":"average of Jamaica and Trinidad and Tobago"},"latam":{"pdi":69,"idv":19,"basis":"average of 11 countries"}},"world":[["Argentina",49,46],["Australia",38,90],["Austria",11,55],["Bangladesh",80,20],["Belgium",65,75],["Belgium French",67,72],["Belgium Netherl",61,78],["Brazil",69,38],["Bulgaria",70,30],["Canada",39,80],["Canada French",54,73],["Chile",63,23],["China",80,20],["Colombia",67,13],["Costa Rica",35,15],["Croatia",73,33],["Czech Rep",57,58],["Denmark",18,74],["Ecuador",78,8],["El Salvador",66,19],["Estonia",40,60],["Finland",33,63],["France",68,71],["Germany",35,67],["Great Britain",35,89],["Greece",60,35],["Guatemala",95,6],["Hong Kong",68,25],["Hungary",46,80],["India",77,48],["Indonesia",78,14],["Iran",58,41],["Ireland",28,70],["Israel",13,54],["Italy",50,76],["Jamaica",45,39],["Japan",54,46],["Korea South",60,18],["Latvia",44,70],["Lithuania",42,60],["Luxembourg",40,60],["Malaysia",100,26],["Malta",56,59],["Mexico",81,30],["Morocco",70,46],["Netherlands",38,80],["New Zealand",22,79],["Norway",31,69],["Pakistan",55,14],["Panama",95,11],["Peru",64,16],["Philippines",94,32],["Poland",68,60],["Portugal",63,27],["Romania",90,30],["Russia",93,39],["Serbia",86,25],["Singapore",74,20],["Slovak Rep",100,52],["Slovenia",71,27],["South Africa white",49,65],["Spain",57,51],["Suriname",85,47],["Sweden",31,71],["Switzerland",34,68],["Switzerland French",70,64],["Switzerland German",26,69],["Taiwan",58,17],["Thailand",64,20],["Trinidad and Tobago",47,16],["Turkey",66,37],["U.S.A.",40,91],["Uruguay",61,36],["Venezuela",81,12],["Vietnam",70,20]]};
+const DCAPS = [
+  "Dial 1, rank. The US, UK and Germany put parents closest to kids. Russia and the Philippines put them furthest apart.",
+  "Dial 2, say it or show it. Britain and the US say it out loud. Korea, Latin America and West Africa show it.",
+  "High on both, and sorry turns into food or silence: 14 of the 16 places that skip the words sit top-right. Japan's soft apology lands dead center. Italy is the odd one out."
+];
+const plot = document.getElementById("plot"), ptip = document.getElementById("ptip"), dcap = document.getElementById("dcap");
+const ladder = document.getElementById("ladder");
+const dialState = { step: 2 };
+const wdots = DIALS.world.map(([name, pdi, idv], i) => {
+  const el = document.createElement("span"); el.className = "wd"; el.title = name;
+  el.style.setProperty("--delay", `${(i % 25) * 8}ms`); plot.appendChild(el);
+  return { el, name, pdi, idv, jit: ((i * 37) % 23) / 22 - .5 };
+});
+const adots = Object.entries(DIALS.places).map(([key, v], i) => {
+  const d = byKey[key];
+  const el = document.createElement("button"); el.type = "button"; el.className = "ad"; el.textContent = CODE[key];
+  el.style.background = `var(--c-${d.cat})`; el.style.setProperty("--delay", `${i * 22}ms`);
+  el.setAttribute("aria-label", `${d.name}: rank ${v.pdi}, show it ${100 - v.idv}`);
+  const show = e => {
+    ptip.innerHTML = `<b>${esc(d.name)}</b><br>Rank ${v.pdi} · Show it ${100 - v.idv}<br>${CATS[d.cat]}${v.basis.startsWith("Hofstede") || v.basis.startsWith("average") ? `<br><span style="opacity:.75">Uses ${esc(v.basis)}</span>` : ""}`;
+    const r = plot.getBoundingClientRect(), b = el.getBoundingClientRect();
+    const x = Math.min(r.width - 230, Math.max(4, b.left - r.left + b.width / 2 - 70));
+    const y = b.top - r.top > 90 ? b.top - r.top - ptip.offsetHeight - 8 : b.bottom - r.top + 8;
+    ptip.style.transform = `translate(${x}px, ${y}px)`; ptip.classList.add("on");
+  };
+  el.onmouseenter = show; el.onfocus = show;
+  el.onmouseleave = () => ptip.classList.remove("on"); el.onblur = () => ptip.classList.remove("on");
+  el.onclick = () => { select(key); adots.forEach(a => a.el.classList.toggle("sel", a.key === key)); };
+  plot.appendChild(el);
+  return { el, key, pdi: v.pdi, show: 100 - v.idv };
+});
+
+// Push overlapping dots apart along the axes that are free in this step.
+function relax(pts, minD, freeX, freeY, W, H) {
+  for (let it = 0; it < 60; it++) {
+    for (let a = 0; a < pts.length; a++) for (let b = a + 1; b < pts.length; b++) {
+      const p = pts[a], q = pts[b];
+      let dx = q.x - p.x, dy = q.y - p.y, dist = Math.hypot(dx, dy);
+      if (dist >= minD) continue;
+      if (dist < .01) { dx = freeX ? 1 : 0; dy = freeX ? 0 : 1; dist = 1; }
+      const push = (minD - dist) / 2, ux = dx / dist, uy = dy / dist;
+      if (freeX) { p.x -= ux * push; q.x += ux * push; }
+      if (freeY) { p.y -= uy * push; q.y += uy * push; }
+    }
+    pts.forEach(p => { p.x = Math.max(minD / 2, Math.min(W - minD / 2, p.x)); p.y = Math.max(minD / 2, Math.min(H - minD / 2, p.y)); });
+  }
+}
+function dialLayout() {
+  const W = plot.clientWidth, H = plot.clientHeight; if (!W) return;
+  const AD = Math.max(22, Math.min(32, Math.round(W / 20)));
+  plot.style.setProperty("--ad", AD + "px");
+  const s = dialState.step;
+  const X = v => 10 + (W - 20) * v / 100, Y = v => H - 10 - (H - 20) * v / 100;
+  const pts = adots.map(a => ({ a, x: s === 1 ? W / 2 : X(a.pdi), y: s === 0 ? H / 2 : Y(a.show) }));
+  relax(pts, AD + 2, s !== 0, s !== 1, W, H);
+  pts.forEach(p => p.a.el.style.transform = `translate(${p.x}px, ${p.y}px)`);
+  wdots.forEach(w => {
+    const x = s === 1 ? W / 2 + w.jit * W * .5 : X(w.pdi), y = s === 0 ? H / 2 + w.jit * H * .5 : Y(100 - w.idv);
+    w.el.style.transform = `translate(${x}px, ${y}px)`;
+  });
+  plot.querySelectorAll(".quad").forEach(q => q.style.opacity = s === 2 ? 1 : 0);
+  plot.querySelector(".mid.v").style.opacity = s !== 1 ? 1 : 0;
+  plot.querySelector(".mid.h").style.opacity = s !== 0 ? 1 : 0;
+  document.getElementById("xlab").style.opacity = s !== 1 ? 1 : .25;
+  document.getElementById("ylab").style.opacity = s !== 0 ? 1 : .25;
+}
+function setStep(s, animate = true) {
+  dialState.step = s;
+  const seg = document.getElementById("seg-dial"); seg.dataset.on = s;
+  seg.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", +b.dataset.v === s));
+  dcap.textContent = DCAPS[s];
+  if (animate && !reduced) { dcap.classList.remove("swap"); void dcap.offsetWidth; dcap.classList.add("swap"); }
+  dialLayout();
+  if (s === 0 && animate) { ladder.classList.remove("on"); void ladder.offsetWidth; ladder.classList.add("on"); }
+}
+document.querySelectorAll("#seg-dial button").forEach(b => b.onclick = () => { clearTimeout(playT); setStep(+b.dataset.v); });
+let playT;
+document.getElementById("play").onclick = () => {
+  clearTimeout(playT); setStep(0);
+  playT = setTimeout(() => { setStep(1); playT = setTimeout(() => setStep(2), 2200); }, 2200);
+};
+new ResizeObserver(() => dialLayout()).observe(plot);
+setStep(2, false);
+ladder.classList.add("on");
 
 if (!reduced) {
   const n = document.getElementById("n1"); let v = 0;
